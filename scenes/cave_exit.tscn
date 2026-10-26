@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/cave.png" id="1_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cave"]
+size = Vector2(12, 28)
+
+[node name="CaveExit" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("1_tex")
+offset = Vector2(0, -24)
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+position = Vector2(0, -14)
+shape = SubResource("RectangleShape2D_cave")

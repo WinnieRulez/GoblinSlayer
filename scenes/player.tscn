@@ -1,0 +1,41 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/frame_anim.gd" id="2_anim"]
+[ext_resource type="Texture2D" path="res://assets/sprites/slayer_armor.png" id="3_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(14, 36)
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 1
+floor_snap_length = 4.0
+script = ExtResource("1_player")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("3_tex")
+offset = Vector2(0, -40)
+hframes = 12
+vframes = 9
+script = ExtResource("2_anim")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+position = Vector2(0, -18)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 36
+
+[node name="Shape" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -18)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Camera" type="Camera2D" parent="."]
+position = Vector2(0, -40)
+position_smoothing_enabled = true
+position_smoothing_speed = 7.0
+drag_horizontal_enabled = true
+drag_left_margin = 0.08
+drag_right_margin = 0.08

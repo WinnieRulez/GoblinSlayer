@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/chest.gd" id="1_chest"]
+[ext_resource type="Texture2D" path="res://assets/sprites/heart.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_chest"]
+size = Vector2(20, 24)
+
+[node name="LifePickup" type="Area2D"]
+collision_layer = 16
+collision_mask = 2
+script = ExtResource("1_chest")
+kind = "life"
+points = 200
+
+[node name="Sprite" type="Sprite2D" parent="."]
+position = Vector2(0, -10)
+texture = ExtResource("2_tex")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+position = Vector2(0, -14)
+shape = SubResource("RectangleShape2D_chest")

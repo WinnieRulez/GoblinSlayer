@@ -1,0 +1,35 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/goblin.gd" id="1_gob"]
+[ext_resource type="Script" path="res://scripts/frame_anim.gd" id="2_anim"]
+[ext_resource type="Texture2D" path="res://assets/sprites/wolf.png" id="3_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wolf"]
+size = Vector2(34, 20)
+
+[node name="Wolf" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 1
+floor_snap_length = 4.0
+script = ExtResource("1_gob")
+speed = 40.0
+hp = 2
+points = 200
+hop_velocity = -260.0
+kind = "wolf"
+charge_speed = 125.0
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("3_tex")
+offset = Vector2(0, -24)
+hframes = 12
+vframes = 4
+script = ExtResource("2_anim")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+position = Vector2(0, -10)
+shape = SubResource("RectangleShape2D_wolf")
+
+[node name="LedgeRay" type="RayCast2D" parent="."]
+position = Vector2(-19, -2)
+target_position = Vector2(0, 12)

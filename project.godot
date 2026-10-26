@@ -1,0 +1,79 @@
+; Engine configuration file.
+; Aprilo con Godot 4.3 o successivo.
+
+config_version=5
+
+[application]
+
+config/name="Goblin Slayer - Il cavaliere dei goblin"
+config/description="Platform d'azione alla Ghosts'n Goblins, prototipo."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "GL Compatibility")
+
+[autoload]
+
+Game="*res://scripts/game.gd"
+
+[display]
+
+window/size/viewport_width=384
+window/size/viewport_height=216
+window/size/window_width_override=1152
+window/size/window_height_override=648
+window/stretch/mode="viewport"
+window/stretch/scale_mode="integer"
+
+[gui]
+
+theme/default_font_antialiasing=0
+theme/default_font_hinting=0
+theme/default_font_subpixel_positioning=0
+
+[input]
+
+move_left={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":65), Object(InputEventKey,"physical_keycode":4194319), Object(InputEventJoypadButton,"button_index":13), Object(InputEventJoypadMotion,"axis":0,"axis_value":-1.0)]
+}
+move_right={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":68), Object(InputEventKey,"physical_keycode":4194321), Object(InputEventJoypadButton,"button_index":14), Object(InputEventJoypadMotion,"axis":0,"axis_value":1.0)]
+}
+crouch={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":83), Object(InputEventKey,"physical_keycode":4194322), Object(InputEventJoypadButton,"button_index":12), Object(InputEventJoypadMotion,"axis":1,"axis_value":1.0)]
+}
+jump={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":32), Object(InputEventKey,"physical_keycode":75), Object(InputEventKey,"physical_keycode":90), Object(InputEventJoypadButton,"button_index":0)]
+}
+attack={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":74), Object(InputEventKey,"physical_keycode":88), Object(InputEventJoypadButton,"button_index":2)]
+}
+pause={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"physical_keycode":4194305), Object(InputEventKey,"physical_keycode":80), Object(InputEventJoypadButton,"button_index":6)]
+}
+
+[layer_names]
+
+2d_physics/layer_1="mondo"
+2d_physics/layer_2="giocatore"
+2d_physics/layer_3="nemici"
+2d_physics/layer_4="armi_giocatore"
+2d_physics/layer_5="oggetti"
+2d_physics/layer_6="pericoli"
+
+[physics]
+
+2d/default_gravity=900.0
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true
+environment/defaults/default_clear_color=Color(0.055, 0.04, 0.15, 1)

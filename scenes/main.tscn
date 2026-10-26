@@ -1,0 +1,81 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/level.gd" id="1_level"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/sky.png" id="bg_sky"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/clouds.png" id="bg_clouds"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/mountains.png" id="bg_mountains"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/forest.png" id="bg_forest"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/town.png" id="bg_town"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="6_player"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="7_hud"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_level")
+
+[node name="Sky" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.0, 0)
+repeat_size = Vector2(384, 0)
+repeat_times = 3
+
+[node name="Sprite" type="Sprite2D" parent="Sky"]
+position = Vector2(0, -8)
+texture = ExtResource("bg_sky")
+centered = false
+
+[node name="Clouds" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.04, 0)
+repeat_size = Vector2(288, 0)
+repeat_times = 3
+
+[node name="Sprite" type="Sprite2D" parent="Clouds"]
+position = Vector2(0, -8)
+texture = ExtResource("bg_clouds")
+centered = false
+
+[node name="Mountains" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.12, 0)
+repeat_size = Vector2(384, 0)
+repeat_times = 3
+
+[node name="Sprite" type="Sprite2D" parent="Mountains"]
+position = Vector2(0, -8)
+texture = ExtResource("bg_mountains")
+centered = false
+
+[node name="Forest" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.3, 0)
+repeat_size = Vector2(384, 0)
+repeat_times = 3
+
+[node name="Sprite" type="Sprite2D" parent="Forest"]
+position = Vector2(0, -8)
+texture = ExtResource("bg_forest")
+centered = false
+
+[node name="Town" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.5, 0)
+repeat_size = Vector2(512, 0)
+repeat_times = 3
+
+[node name="Sprite" type="Sprite2D" parent="Town"]
+position = Vector2(0, -8)
+texture = ExtResource("bg_town")
+centered = false
+
+[node name="Decor" type="Node2D" parent="."]
+modulate = Color(0.78, 0.8, 0.92, 1)
+
+[node name="Ground" type="TileMapLayer" parent="."]
+modulate = Color(0.78, 0.8, 0.92, 1)
+
+[node name="Platforms" type="TileMapLayer" parent="."]
+modulate = Color(0.78, 0.8, 0.92, 1)
+
+[node name="Hazards" type="TileMapLayer" parent="."]
+modulate = Color(0.78, 0.8, 0.92, 1)
+
+[node name="Entities" type="Node2D" parent="."]
+
+[node name="Player" parent="Entities" instance=ExtResource("6_player")]
+
+[node name="Hud" parent="." instance=ExtResource("7_hud")]
