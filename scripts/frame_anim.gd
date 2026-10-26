@@ -6,6 +6,8 @@ extends Sprite2D
 signal finished(anim_name: StringName)
 
 var animations: Dictionary = {}
+## Ferma l'animazione sul fotogramma corrente (es. sulla scala senza muoversi)
+var paused := false
 var current: StringName = &""
 var _index := 0
 var _time := 0.0
@@ -21,7 +23,7 @@ func play(anim_name: StringName, restart := false) -> void:
 
 
 func _process(delta: float) -> void:
-	if current == &"":
+	if current == &"" or paused:
 		return
 	var a: Dictionary = animations[current]
 	var frames: Array = a["frames"]

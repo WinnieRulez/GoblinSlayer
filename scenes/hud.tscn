@@ -8,25 +8,57 @@ script = ExtResource("1_hud")
 
 [node name="Top" type="HBoxContainer" parent="."]
 offset_left = 6.0
-offset_top = 3.0
+offset_top = 1.0
 offset_right = 378.0
-offset_bottom = 15.0
-theme_override_constants/separation = 20
+offset_bottom = 40.0
+theme_override_constants/separation = 40
 
-[node name="Score" type="Label" parent="Top"]
+[node name="Player" type="VBoxContainer" parent="Top"]
+layout_mode = 2
+theme_override_constants/separation = -3
+
+[node name="Title" type="Label" parent="Top/Player"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 10
+text = "GIOCATORE 1"
+
+[node name="Score" type="Label" parent="Top/Player"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 10
+text = "000000"
+
+[node name="Time" type="Label" parent="Top/Player"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.85, 1, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 10
+text = "TEMPO 3:00"
+
+[node name="Record" type="VBoxContainer" parent="Top"]
+layout_mode = 2
+theme_override_constants/separation = -3
+
+[node name="Title" type="Label" parent="Top/Record"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.4, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 10
+text = "RECORD"
+
+[node name="Score" type="Label" parent="Top/Record"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.86, 0.45, 1)
 theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 10
-text = "PUNTI 000000"
-
-[node name="Lives" type="Label" parent="Top"]
-layout_mode = 2
-theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
-theme_override_constants/outline_size = 3
-theme_override_font_sizes/font_size = 10
-text = "VITE 3"
+text = "000000"
 
 [node name="Armor" type="Label" parent="Top"]
 layout_mode = 2
@@ -34,6 +66,48 @@ theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
 theme_override_constants/outline_size = 3
 theme_override_font_sizes/font_size = 10
 text = "ARMATURA"
+
+[node name="Bottom" type="HBoxContainer" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = -22.0
+offset_right = 378.0
+offset_bottom = -2.0
+theme_override_constants/separation = 4
+
+[node name="WeaponFrame" type="Panel" parent="Bottom"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+self_modulate = Color(0.1, 0.07, 0.14, 0.75)
+
+[node name="Icon" type="TextureRect" parent="Bottom/WeaponFrame"]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 18.0
+offset_bottom = 18.0
+stretch_mode = 3
+
+[node name="WeaponName" type="Label" parent="Bottom"]
+layout_mode = 2
+size_flags_vertical = 4
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.86, 0.45, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 10
+text = "PUGNALE"
+
+[node name="Lives" type="Label" parent="Bottom"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_outline_color = Color(0.08, 0.05, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 10
+text = "VITE 3"
+
 
 [node name="Pause" type="Label" parent="."]
 visible = false

@@ -17,7 +17,7 @@ script = ExtResource("1_player")
 texture = ExtResource("3_tex")
 offset = Vector2(0, -40)
 hframes = 12
-vframes = 9
+vframes = 10
 script = ExtResource("2_anim")
 
 [node name="Shape" type="CollisionShape2D" parent="."]

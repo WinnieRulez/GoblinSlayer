@@ -11,6 +11,8 @@ extends CharacterBody2D
 @export_enum("goblin", "wolf") var kind := "goblin"
 ## Velocità quando il lupo carica il giocatore
 @export var charge_speed := 0.0
+## Probabilità di lasciare un'arma quando muore
+@export var drop_chance := 0.12
 
 const ANIMS := {
 	"goblin": {
@@ -120,4 +122,7 @@ func hit(damage: int, from_dir: int) -> void:
 	Game.add_score(points)
 	Game.play_sfx("goblin_die")
 	Fx.spawn(get_parent(), &"puff", global_position + Vector2(0, -10))
+	if randf() < drop_chance:
+		var names := Dagger.WEAPONS.keys().filter(func(n): return n != Game.weapon)
+		WeaponPickup.drop(get_parent(), global_position, names.pick_random())
 	queue_free()

@@ -1,7 +1,7 @@
 class_name Player
 extends CharacterBody2D
 ## Goblin Slayer. Controlli alla Ghosts'n Goblins: salto "impegnato" (in aria non si
-## cambia traiettoria), pugnali da lancio, l'armatura assorbe un colpo e poi vola via.
+## cambia traiettoria), armi da lancio, scale a pioli, l'armatura assorbe un colpo e poi vola via.
 
 signal died
 signal armor_changed(armored: bool)
@@ -12,14 +12,14 @@ signal armor_changed(armored: bool)
 @export var max_fall_speed := 360.0
 ## Come nell'originale: una volta staccati da terra la traiettoria non si può correggere.
 @export var classic_jump := true
-@export var max_daggers := 3
-@export var throw_cooldown := 0.22
 @export var invulnerable_time := 1.6
+@export var climb_speed := 60.0
 
+const TILE := 16
 const DAGGER := preload("res://scenes/dagger.tscn")
 const TEX_ARMOR := preload("res://assets/sprites/slayer_armor.png")
 const TEX_NOARMOR := preload("res://assets/sprites/slayer_noarmor.png")
-## Fotogrammi nello spritesheet 12x9 (celle 96x80, una riga per animazione: vedi tools/import_packs.py)
+## Fotogrammi nello spritesheet 12x10 (celle 96x80, una riga per animazione: vedi tools/import_packs.py)
 const ANIMS := {
 	&"idle": {"frames": [0, 1, 2, 3], "fps": 6.0},
 	&"run": {"frames": [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], "fps": 16.0},
@@ -30,9 +30,10 @@ const ANIMS := {
 	&"crouch_throw": {"frames": [62], "fps": 1.0},
 	&"hurt": {"frames": [72, 73], "fps": 8.0, "loop": false},
 	&"dead": {"frames": [96], "fps": 1.0},
+	&"climb": {"frames": [108, 109, 110, 111], "fps": 7.0},
 }
 
-enum State { NORMAL, HURT, DEAD, WIN }
+enum State { NORMAL, HURT, DEAD, WIN, CLIMB }
 
 var state := State.NORMAL
 var armored := true
@@ -69,11 +70,14 @@ func _physics_process(delta: float) -> void:
 	if _invuln > 0.0:
 		_invuln -= delta
 		sprite.visible = _invuln <= 0.0 or int(_invuln * 20.0) % 2 == 0
-	velocity.y = min(velocity.y + gravity * delta, max_fall_speed)
+	if state != State.CLIMB:
+		velocity.y = min(velocity.y + gravity * delta, max_fall_speed)
 
 	match state:
 		State.NORMAL:
 			_normal_state()
+		State.CLIMB:
+			_climb_state()
 		State.HURT:
 			_hurt_timer -= delta
 			if _hurt_timer <= 0.0 and is_on_floor():
@@ -110,6 +114,51 @@ func _normal_state() -> void:
 	if Input.is_action_just_pressed("attack"):
 		_throw()
 
+	# scale a pioli: su per afferrarla, giù per scendere dalla cima
+	var col := floori(global_position.x / TILE)
+	var row := floori((global_position.y - 1.0) / TILE)
+	if Input.is_action_pressed("move_up") and Game.is_ladder(col, row):
+		_start_climb(col)
+	elif on_floor and Input.is_action_pressed("crouch") and Game.is_ladder(col, row + 1):
+		_start_climb(col)
+		global_position.y += 4.0
+
+
+func _start_climb(col: int) -> void:
+	state = State.CLIMB
+	_set_crouch(false)
+	velocity = Vector2.ZERO
+	global_position.x = col * TILE + TILE / 2.0
+	set_collision_mask_value(1, false)  # attraversa la cima della collina
+
+
+func _end_climb() -> void:
+	set_collision_mask_value(1, true)
+	if state == State.CLIMB:
+		state = State.NORMAL
+
+
+func _climb_state() -> void:
+	var v := Input.get_axis("move_up", "crouch")
+	velocity = Vector2(0.0, v * climb_speed)
+	var dir := Input.get_axis("move_left", "move_right")
+	if dir != 0.0:
+		facing = 1 if dir > 0.0 else -1
+	if Input.is_action_just_pressed("attack"):
+		_throw()
+	if Input.is_action_just_pressed("jump"):
+		_end_climb()  # si lascia andare
+		return
+	var col := floori(global_position.x / TILE)
+	var row := floori((global_position.y - 1.0) / TILE)
+	if v < 0.0 and not Game.is_ladder(col, row):
+		# arrivato in cima: in piedi sulla collina
+		global_position.y = (row + 1) * TILE
+		velocity.y = 0.0
+		_end_climb()
+	elif v > 0.0 and not Game.is_ladder(col, floori((global_position.y + 1.0) / TILE)):
+		global_position.y = floorf((global_position.y + 1.0) / TILE) * TILE
+		_end_climb()  # arrivato in fondo
 
 func _set_crouch(value: bool) -> void:
 	crouching = value
@@ -123,15 +172,20 @@ func _set_crouch(value: bool) -> void:
 
 
 func _throw() -> void:
-	if _throw_timer > 0.0 or get_tree().get_nodes_in_group("player_daggers").size() >= max_daggers:
+	var w: Dictionary = Dagger.WEAPONS[Game.weapon]
+	if _throw_timer > 0.0 or get_tree().get_nodes_in_group("player_daggers").size() >= w["max"]:
 		return
-	_throw_timer = throw_cooldown
+	_throw_timer = w["cooldown"]
 	_throw_anim = 0.2
-	sprite.play(&"crouch_throw" if crouching else &"throw", true)
-	var d: Dagger = DAGGER.instantiate()
-	d.direction = facing
-	d.global_position = global_position + Vector2(14 * facing, -12 if crouching else -21)
-	get_parent().add_child(d)
+	if state != State.CLIMB:
+		sprite.play(&"crouch_throw" if crouching else &"throw", true)
+	for rise in ([0.0, -0.3] if w.get("spread", false) else [0.0]):
+		var d: Dagger = DAGGER.instantiate()
+		d.weapon = Game.weapon
+		d.direction = facing
+		d.rise = rise
+		d.global_position = global_position + Vector2(14 * facing, -12 if crouching else -21)
+		get_parent().add_child(d)
 	Game.play_sfx("throw")
 
 
@@ -151,6 +205,7 @@ func take_hit(from_x: float) -> void:
 	if not armored:
 		die()
 		return
+	_end_climb()
 	set_armored(false)
 	Game.play_sfx("armor_lost")
 	_spawn_armor_bits()
@@ -178,6 +233,7 @@ func restore_armor() -> void:
 func die() -> void:
 	if state == State.DEAD:
 		return
+	_end_climb()
 	state = State.DEAD
 	if armored:
 		set_armored(false)
@@ -215,6 +271,8 @@ func _update_animation() -> void:
 			anim = &"hurt"
 		State.WIN:
 			anim = &"idle"
+		State.CLIMB:
+			anim = &"climb"
 		_:
 			if crouching:
 				anim = &"crouch_throw" if _throw_anim > 0.0 else &"crouch"
@@ -225,4 +283,5 @@ func _update_animation() -> void:
 			elif absf(velocity.x) > 1.0:
 				anim = &"run"
 	sprite.play(anim)
+	sprite.paused = state == State.CLIMB and velocity.y == 0.0
 	sprite.flip_h = facing < 0

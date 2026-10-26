@@ -1,6 +1,7 @@
+class_name Level
 extends Node2D
 ## Costruisce il livello da una mappa ASCII (vedi levels/level_1.gd), posiziona giocatore,
-## goblin e oggetti, e gestisce morte, checkpoint e vittoria.
+## goblin e oggetti, e gestisce tempo, morte, checkpoint e vittoria.
 
 const TILE := 16
 const LEVEL := preload("res://levels/level_1.gd")
@@ -9,6 +10,12 @@ const SPAWNER := preload("res://scenes/goblin_spawner.tscn")
 const CHEST := preload("res://scenes/chest.tscn")
 const HEART := preload("res://scenes/heart.tscn")
 const WOLF := preload("res://scenes/wolf.tscn")
+const GHOST := preload("res://scenes/ghost.tscn")
+const WEAPON := preload("res://scenes/weapon_pickup.tscn")
+## Armi per le cifre della mappa ("1" alabarda, "2" martello, ...)
+const WEAPON_KEYS := ["silverhalberd", "battlehammer", "enchantedbow", "earthstaff", "machete"]
+const TOMBS := 4
+const TREES := 2
 ## Decorazioni per "t" (scelte in base alla posizione) e "x"
 const DECOR_T := ["skull_pike", "mushrooms", "skull_totem", "rock", "pike", "mushroom", "skull_totem2", "candle"]
 const DECOR_X := ["sword_rock", "rock", "skull_pike"]
@@ -18,6 +25,7 @@ const TILESET_TEX := preload("res://assets/tiles/tileset.png")
 ## Dove ricominciare dopo una morte (sopravvive al ricaricamento della scena)
 static var checkpoint := Vector2.INF
 
+@onready var backdrop: TileMapLayer = $Backdrop
 @onready var ground: TileMapLayer = $Ground
 @onready var platforms: TileMapLayer = $Platforms
 @onready var hazards: TileMapLayer = $Hazards
@@ -37,7 +45,7 @@ func _ready() -> void:
 	for line: String in _map:
 		_size.x = max(_size.x, line.length())
 	var ts := _build_tileset()
-	for layer in [ground, platforms, hazards]:
+	for layer in [backdrop, ground, platforms, hazards]:
 		layer.tile_set = ts
 	platforms.add_to_group("oneway")
 	hazards.add_to_group("hazard")
@@ -52,6 +60,15 @@ func _ready() -> void:
 	player.fall_limit = _size.y * TILE + 32
 	player.died.connect(_on_player_died)
 	hud.bind_player(player)
+	Game.time_left = Game.LEVEL_TIME
+
+
+func _physics_process(delta: float) -> void:
+	if _over or player.state == Player.State.DEAD or player.state == Player.State.WIN:
+		return
+	Game.time_left = maxf(Game.time_left - delta, 0.0)
+	if Game.time_left <= 0.0:
+		player.die()
 
 
 func _cell(x: int, y: int) -> String:
@@ -63,6 +80,7 @@ func _cell(x: int, y: int) -> String:
 
 func _build_map() -> void:
 	var start := Vector2.ZERO
+	Game.ladders.clear()
 	for y in _size.y:
 		for x in _size.x:
 			var c := _cell(x, y)
@@ -83,6 +101,38 @@ func _build_map() -> void:
 					platforms.set_cell(cell, 0, _tile(4 if l and r else (12 if r else (13 if l else 4))))
 				"^":
 					hazards.set_cell(cell, 0, _tile(7))
+				"h", "l":
+					platforms.set_cell(cell, 0, _tile(19 if c == "l" else [5, 6, 5][(x * 7) % 3]))
+					if c == "l":
+						Game.ladders[cell] = true
+					# fianco di terra della collina, dietro a tutto, fino al terreno sottostante
+					var yy := y + 1
+					while yy < _size.y and not "#B".contains(_cell(x, yy)):
+						backdrop.set_cell(Vector2i(x, yy), 0, _tile([14, 15, 22, 23][(x * 5 + yy * 3) % 4]))
+						yy += 1
+				"L":
+					platforms.set_cell(cell, 0, _tile(18))
+					Game.ladders[cell] = true
+				"T":
+					_add_tomb((x * 3 + y) % TOMBS, pos)
+				"Y":
+					_add_decor("dead_tree_%d" % (x % TREES), pos + Vector2(0, 3))
+				"G":
+					var gs: Node2D = SPAWNER.instantiate()
+					gs.enemy = GHOST
+					gs.from_sky = true
+					gs.max_alive = 1
+					gs.min_interval = 4.0
+					gs.max_interval = 7.0
+					gs.min_distance = 0.0
+					gs.activate_distance = 260.0
+					gs.position = pos
+					entities.add_child(gs)
+				"1", "2", "3", "4", "5":
+					var wp: WeaponPickup = WEAPON.instantiate()
+					wp.weapon = WEAPON_KEYS[int(c) - 1]
+					wp.position = pos
+					entities.add_child(wp)
 				"t":
 					_add_decor(DECOR_T[(x * 5 + y) % DECOR_T.size()], pos)
 				"x":
@@ -132,7 +182,8 @@ func _build_map() -> void:
 
 ## Indici delle tessere in assets/tiles/tileset.png (8 per riga), vedi tools/import_packs.py
 const SOLID_TILES := [0, 1, 2, 3, 8, 9, 10, 11, 16, 17]
-const PLANK_TILES := [4, 12, 13]
+const PLANK_TILES := [4, 12, 13, 5, 6, 19]  # assi e cime delle colline: si attraversano dal basso
+const BACK_TILES := [14, 15, 22, 23, 18]       # fianco delle colline e scale: solo grafica
 
 
 func _tile(index: int) -> Vector2i:
@@ -145,6 +196,27 @@ func _add_decor(decor_name: String, pos: Vector2) -> void:
 	spr.centered = false
 	spr.position = (pos - Vector2(spr.texture.get_width() / 2.0, spr.texture.get_height())).round()
 	decor_layer.add_child(spr)
+
+
+## Lapide: solida come in Ghosts'n Goblins (ferma le armi, ci si può salire sopra)
+func _add_tomb(index: int, pos: Vector2) -> void:
+	var tex: Texture2D = load("res://assets/decor/tomb_%d.png" % index)
+	var body := StaticBody2D.new()
+	body.collision_layer = Game.L_WORLD
+	body.collision_mask = 0
+	body.position = pos + Vector2(0, 1)
+	var spr := Sprite2D.new()
+	spr.texture = tex
+	spr.centered = false
+	spr.position = Vector2(-tex.get_width() / 2, -tex.get_height())
+	body.add_child(spr)
+	var sh := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(tex.get_width() - 4, tex.get_height() - 4)
+	sh.shape = rect
+	sh.position = Vector2(0, -rect.size.y / 2.0 - 1)
+	body.add_child(sh)
+	decor_layer.add_child(body)
 
 
 func _build_tileset() -> TileSet:
@@ -164,7 +236,7 @@ func _build_tileset() -> TileSet:
 	ts.add_source(src, 0)
 	var h := TILE / 2.0
 	var full := PackedVector2Array([Vector2(-h, -h), Vector2(h, -h), Vector2(h, h), Vector2(-h, h)])
-	for i in SOLID_TILES + PLANK_TILES + [7]:
+	for i in SOLID_TILES + PLANK_TILES + BACK_TILES + [7]:
 		src.create_tile(_tile(i))
 	for i in SOLID_TILES:
 		var td := src.get_tile_data(_tile(i), 0)

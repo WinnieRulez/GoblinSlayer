@@ -1,10 +1,14 @@
 extends Node
-## Stato globale della partita (autoload "Game"): punteggio, vite, effetti sonori.
+## Stato globale della partita (autoload "Game"): punteggio, record, vite, arma, tempo, effetti sonori.
 
 signal score_changed(value: int)
 signal lives_changed(value: int)
+signal weapon_changed(weapon: String)
 
 const START_LIVES := 3
+## Tempo a disposizione per ogni vita, come in Ghosts'n Goblins (secondi)
+const LEVEL_TIME := 180.0
+const RECORD_FILE := "user://record.cfg"
 
 # Livelli di collisione (vedi Impostazioni progetto > Nomi livelli > Fisica 2D)
 const L_WORLD := 1
@@ -23,6 +27,14 @@ var lives := START_LIVES:
 		lives = v
 		lives_changed.emit(lives)
 var hi_score := 0
+## Arma in mano (chiave di Dagger.WEAPONS): resta anche dopo una morte, come nell'originale
+var weapon := "dagger":
+	set(v):
+		weapon = v
+		weapon_changed.emit(weapon)
+var time_left := LEVEL_TIME
+## Celle del livello con una scala a pioli (Vector2i -> true), riempite da level.gd
+var ladders := {}
 
 var _sfx := {}
 var _players: Array[AudioStreamPlayer] = []
@@ -37,16 +49,28 @@ func _ready() -> void:
 		p.volume_db = -6.0
 		add_child(p)
 		_players.append(p)
+	var cfg := ConfigFile.new()
+	if cfg.load(RECORD_FILE) == OK:
+		hi_score = cfg.get_value("record", "punti", 0)
 
 
 func new_game() -> void:
 	score = 0
 	lives = START_LIVES
+	weapon = "dagger"
 
 
 func add_score(points: int) -> void:
 	score += points
-	hi_score = max(hi_score, score)
+	if score > hi_score:
+		hi_score = score
+		var cfg := ConfigFile.new()
+		cfg.set_value("record", "punti", hi_score)
+		cfg.save(RECORD_FILE)
+
+
+func is_ladder(col: int, row: int) -> bool:
+	return ladders.has(Vector2i(col, row))
 
 
 func play_sfx(sfx_name: String, pitch_jitter := 0.08) -> void:
